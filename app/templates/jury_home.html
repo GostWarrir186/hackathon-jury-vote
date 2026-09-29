@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_eye.html" import eye %}
+{% block title %}Жюри — {{ j.name }}{% endblock %}
+{% block nav %}<a href="{{ P }}/j/{{ token }}/intro">Инструкция</a>{% endblock %}
+{% block head %}<style>
+.toast{position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:8;background:#0b6e4f;color:#fff;
+ border-radius:14px;padding:14px 16px;box-shadow:0 6px 20px rgba(0,0,0,.25);display:flex;justify-content:space-between;align-items:center;gap:10px;
+ animation:tin .3s ease}
+.toast a{color:#fff;font-weight:700;white-space:nowrap}
+.toast.out{opacity:0;transform:translateY(20px);transition:.4s}
+@keyframes tin{from{opacity:0;transform:translateY(20px)}}
+</style>{% endblock %}
+{% block body %}
+<h1>{{ j.name }}</h1>
+<div class="muted">{{ j.role }}</div>
+<div id="closed" class="alert warn {{ 'hide' if s.jury_open == '1' }}">Голосование жюри пока закрыто. Оно откроется автоматически — обновлять страницу не нужно.</div>
+<p class="muted">Оценено {{ scored|length }} из {{ projects|length - conf|length }}. Оценки можно исправлять, пока голосование открыто.</p>
+<div style="margin:-4px 0 6px">{{ eye('plist') }} <span class="muted">мои баллы</span></div>
+<div id="plist" class="masked">
+{% for p in projects %}
+<a href="{{ P }}/j/{{ token }}/p/{{ p.id }}" style="text-decoration:none;color:inherit">
+<div class="card pcard {{ 'now' if s.current_project == p.id|string }}" data-pid="{{ p.id }}">
+ <div class="row" style="justify-content:space-between">
+  <div><strong>{{ p.num }}. {{ p.name }}</strong>{% if p.team %}<div class="muted">{{ p.team }}</div>{% endif %}</div>
+  <div>
+   <span class="pill warnp nowpill">Сейчас выступает</span>
+   {% if p.id in conf %}<span class="pill errp">Конфликт интересов</span>
+   {% elif p.id in scored %}<span class="pill ok">✓ Оценено · <span class="sv">{{ scored[p.id] }}</span></span>
+   {% else %}<span class="pill wait">Не оценён</span>{% endif %}
+  </div>
+ </div>
+</div></a>
+{% endfor %}
+</div>
+{% if saved_p %}
+<div class="toast" id="toast"><span>✓ Оценка «{{ saved_p.num }}. {{ saved_p.name }}» сохранена</span>
+ <a href="{{ P }}/j/{{ token }}/p/{{ saved }}">Исправить</a></div>
+{% endif %}
+<script>
+(function(){const t=document.getElementById('toast');if(!t)return;
+ history.replaceState(null,'',location.pathname);
+ setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),450)},5000);})();
+let cur={{ s.current_project|tojson }};
+liveState(st=>{
+  document.getElementById('closed').classList.toggle('hide',st.jury_open);
+  if(st.current_project!==cur){
+    cur=st.current_project;
+    document.querySelectorAll('.pcard').forEach(c=>{c.classList.remove('now','flash');});
+    const c=document.querySelector(`.pcard[data-pid="${cur}"]`);
+    if(c){c.classList.add('now');void c.offsetWidth;c.classList.add('flash');
+      c.scrollIntoView({behavior:'smooth',block:'center'});
+      if(navigator.vibrate)navigator.vibrate(120);}
+  }
+});
+</script>
+{% endblock %}

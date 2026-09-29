@@ -1,0 +1,17 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>QR-коды жюри</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:0;color:#14212b}
+.bar{padding:12px;background:#f4f6f8}@media print{.bar{display:none}}
+.grid{display:grid;grid-template-columns:repeat(3,1fr)}
+.c{border:1px dashed #bbb;padding:14px;text-align:center;page-break-inside:avoid;height:95mm;display:flex;flex-direction:column;justify-content:center}
+.c svg{width:48mm;height:48mm;margin:0 auto}
+.n{font-weight:700;margin-top:6px;font-size:13px}.r{font-size:11px;color:#555}.u{font-size:8px;color:#999;word-break:break-all;margin-top:4px}
+.t{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#0b6e4f;font-weight:700}
+.aud{page-break-before:always;text-align:center;padding-top:30mm}.aud svg{width:150mm;height:150mm}
+</style></head><body>
+<div class="bar"><button onclick="print()">Печать</button> Персональные карточки — выдать каждому члену жюри лично. Не публиковать.</div>
+<div class="grid">
+{% for c in cards %}<div class="c"><div class="t">Оценочный лист жюри</div>{{ c.svg|safe }}<div class="n">{{ c.name }}</div><div class="r">{{ c.role }}</div><div class="u">{{ c.url }}</div></div>{% endfor %}
+</div>
+<div class="aud"><h1>Голосуйте за «Выбор аудитории»</h1><p>Отсканируйте QR-код — один участник, один голос</p>{{ aud.svg|safe }}<p>{{ aud.url }}</p></div>
+</body></html>

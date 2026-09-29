@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% from "_eye.html" import eye %}
+{% block title %}Секретариат{% endblock %}
+{% block wrapclass %}wide{% endblock %}
+{% block nav %}<a href="{{ P }}/admin">Пульт</a> · <a href="{{ P }}/admin/setup">Настройка</a> · <a href="{{ P }}/admin/qr" target="_blank">QR-коды</a> · <a href="{{ P }}/screen" target="_blank">Экран</a>{% endblock %}
+{% block head %}<meta http-equiv="refresh" content="15">
+<style>.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.m td,.m th{text-align:center;padding:6px}.m td:first-child,.m th:first-child{text-align:left}
+.win td{background:#f0fdf4}.tie td{background:var(--warnbg)}
+.masked tr.win td,.masked tr.tie td{background:transparent}
+</style>{% endblock %}
+{% block body %}
+<h1>Пульт секретариата</h1>
+<div class="grid">
+ <div class="card"><strong>Голосование жюри</strong><br>
+  {% if s.jury_open=='1' %}<span class="pill ok">ОТКРЫТО</span>{% else %}<span class="pill errp">ЗАКРЫТО</span>{% endif %}
+  <form method="post" action="{{ P }}/admin/settings" style="margin-top:10px"><input type="hidden" name="jury_open" value="{{ '0' if s.jury_open=='1' else '1' }}">
+  <button class="btn small {{ 'red' if s.jury_open=='1' }}">{{ 'Закрыть' if s.jury_open=='1' else 'Открыть' }}</button></form></div>
+ <div class="card"><strong>Выступает сейчас</strong>
+  <form method="post" action="{{ P }}/admin/settings" style="margin-top:10px" class="row">
+   <select name="current_project" onchange="this.form.submit()"><option value="">— никто —</option>
+   {% for p in projects %}<option value="{{ p.id }}" {% if s.current_project==p.id|string %}selected{% endif %}>{{ p.num }}. {{ p.name }}</option>{% endfor %}
+   </select></form><div class="muted" style="margin-top:6px">Подсвечивается у жюри на телефонах</div></div>
+ <div class="card"><strong>Выбор аудитории</strong> · {{ aud_total }} голосов<br>
+  {% if s.audience_open=='1' %}<span class="pill ok">ОТКРЫТО</span>{% else %}<span class="pill errp">ЗАКРЫТО</span>{% endif %}
+  <form method="post" action="{{ P }}/admin/settings" style="margin-top:10px"><input type="hidden" name="audience_open" value="{{ '0' if s.audience_open=='1' else '1' }}">
+  <button class="btn small {{ 'red' if s.audience_open=='1' }}">{{ 'Закрыть' if s.audience_open=='1' else 'Открыть' }}</button></form></div>
+ <div class="card"><strong>Экран /screen</strong><br>
+  {% if s.results_public=='1' %}<span class="pill ok">ИТОГИ ПОКАЗАНЫ</span>{% else %}<span class="pill wait">скрыто</span>{% endif %}
+  <form method="post" action="{{ P }}/admin/settings" style="margin-top:10px"><input type="hidden" name="results_public" value="{{ '0' if s.results_public=='1' else '1' }}">
+  <button class="btn small sec" onclick="return {{ 'true' if s.results_public=='1' else 'confirm(\'Показать итоги на экране?\')' }}">{{ 'Скрыть' if s.results_public=='1' else 'Показать итоги' }}</button></form></div>
+</div>
+
+<h2>Прогресс оценки</h2>
+<div class="card scroll"><table class="m">
+<tr><th>Член жюри</th><th title="Открыл QR и прочитал инструкцию">Вошёл</th>{% for p in projects %}<th title="{{ p.name }}">{{ p.num }}</th>{% endfor %}<th>Всего</th></tr>
+{% for j in jurors %}{% set ns = namespace(c=0) %}
+<tr><td>{{ j.name }}</td><td>{% if j.onboarded %}<span style="color:var(--acc);font-weight:700">✓</span>{% else %}<span class="muted" title="Ещё не сканировал QR">—</span>{% endif %}</td>
+{% for p in projects %}<td>{% if (j.id,p.id) in conflicts %}<span title="Конфликт интересов">⛔</span>{% elif (j.id,p.id) in scored %}{% set ns.c = ns.c+1 %}✅{% else %}·{% endif %}</td>{% endfor %}
+<td>{{ ns.c }}</td></tr>{% endfor %}
+</table></div>
+
+<h2 class="row" style="gap:8px">Рейтинг жюри {{ eye('rank') }}</h2>
+<div class="muted" style="margin-top:-6px">Усечённое среднее: при ≥5 оценках отброшены max и min; тай-брейк: реализуемость → MVP → масштабирование</div>
+<div class="card scroll secretbox masked" id="rank"><table>
+<thead><tr><th>Место</th><th>Проект</th><th>Итог</th><th>Оценок</th><th>Все суммы</th>{% for k,l,w in CRITERIA %}<th title="{{ l }}">{{ l[:14] }}… /{{ w }}</th>{% endfor %}</tr></thead>
+<tbody data-sort>
+{% for r in res %}
+<tr class="{{ 'tie' if r.tie else ('win' if r.place and r.place<=3) }}" data-num="{{ r.num }}" data-rank="{{ loop.index }}">
+<td><strong class="sv">{{ r.place or '—' }}</strong>{% if r.tie %}<br><span class="pill warnp sv">ничья</span>{% endif %}</td>
+<td><strong>{{ r.num }}. {{ r.name }}</strong><div class="muted">{{ r.team }}</div></td>
+<td><strong class="sv">{{ '%.2f'|format(r.final) if r.final is not none else '—' }}</strong></td>
+<td>{{ r.n }}/{{ r.eligible }}</td>
+<td class="muted"><span class="sv">{% for t in r.totals %}{% if r.trimmed and (loop.first or loop.last) %}<s>{{ t }}</s>{% else %}{{ t }}{% endif %}{{ ', ' if not loop.last }}{% endfor %}</span></td>
+{% for k,l,w in CRITERIA %}<td><span class="sv">{{ r.crit[k] }}</span></td>{% endfor %}
+</tr>{% endfor %}
+</tbody></table>
+{% if res|selectattr('tie')|list %}<div class="alert warn sv-hide">Полная ничья после тай-брейка → закрытое голосование жюри между проектами (Шаг 10).</div>{% endif %}
+<p><a class="btn small" href="{{ P }}/admin/export.csv">Скачать CSV (Excel)</a></p>
+</div>
+
+<h2 class="row" style="gap:8px">Выбор аудитории {{ eye('aud') }}</h2>
+<div class="card secretbox masked" id="aud"><table>
+<thead><tr><th>Проект</th><th>Голосов</th></tr></thead>
+<tbody data-sort>
+{% for a in aud %}<tr data-num="{{ a.num }}" data-rank="{{ loop.index }}"><td>{{ a.num }}. {{ a.name }}</td><td><strong class="sv">{{ a.votes }}</strong></td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

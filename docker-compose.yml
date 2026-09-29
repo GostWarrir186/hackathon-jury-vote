@@ -1,0 +1,10 @@
+services:
+  jury-vote:
+    build: .
+    container_name: jury-vote
+    restart: unless-stopped
+    ports:
+      - "8010:8000"
+    env_file: .env
+    volumes:
+      - ./data:/data

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ p.name }}{% endblock %}
+{% block head %}<style>
+.scale{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:8px}
+.scale input{display:none}
+.scale label{display:block;text-align:center;padding:10px 0;border:1px solid var(--line);border-radius:8px;font-weight:600;cursor:pointer;user-select:none;background:#fff}
+.scale input:checked+label{background:var(--acc);color:#fff;border-color:var(--acc)}
+.crit{display:flex;justify-content:space-between;gap:8px}.crit span{white-space:nowrap}
+.sticky{position:sticky;bottom:0;background:var(--bg);padding:12px 0 calc(12px + env(safe-area-inset-bottom))}
+.legend{font-size:.8rem;color:var(--muted)}
+</style>{% endblock %}
+{% block nav %}<a href="{{ P }}/j/{{ token }}">← Все проекты</a> · <a href="{{ P }}/j/{{ token }}/intro">?</a>{% endblock %}
+{% block body %}
+<h1>{{ p.num }}. {{ p.name }}</h1>
+{% if p.team %}<div class="muted">{{ p.team }}</div>{% endif %}
+<a id="nowbar" class="nowbar" href="#">▶ Сейчас выступает: <b id="nowname"></b> — перейти к оценке</a>
+{% if saved %}<div class="alert ok">✓ Оценка сохранена. Можно вернуться к списку или исправить.</div>{% endif %}
+{% if conflict %}
+ <div class="alert err">Для вас отмечен конфликт интересов по этому проекту — вы его не оцениваете.</div>
+{% else %}
+ <div id="closed" class="alert warn {{ 'hide' if s.jury_open == '1' }}">Голосование закрыто — сохранить оценку сейчас нельзя. Откроется автоматически.</div>
+ <p class="legend">1–2 не проработано · 3–4 слабо · 5–6 базовый уровень · 7–8 сильно · 9–10 выдающееся</p>
+ <form method="post" id="f">
+ {% for key, label, w in CRITERIA %}
+  <div class="card">
+   <div class="crit"><strong>{{ label }}</strong><span class="muted">вес {{ w }}</span></div>
+   <div class="scale">
+   {% for v in range(1, 11) %}
+    <input type="radio" name="{{ key }}" id="{{ key }}_{{ v }}" value="{{ v }}" required {% if sc and sc[key] == v %}checked{% endif %}>
+    <label for="{{ key }}_{{ v }}">{{ v }}</label>
+   {% endfor %}
+   </div>
+  </div>
+ {% endfor %}
+  <div class="card"><strong>Комментарий</strong> <span class="muted">(необязательно, виден только оргкомитету)</span>
+   <textarea name="comment" style="margin-top:8px">{{ sc.comment if sc else '' }}</textarea></div>
+  <div class="sticky">
+   <button class="btn block" id="sb" {% if s.jury_open != '1' %}disabled{% endif %}>Сохранить оценку — <span id="tot">0/100</span></button>
+  </div>
+ </form>
+ <script>
+ const W={{ CRITERIA|map(attribute=2)|list|tojson }},K={{ CRITERIA|map(attribute=0)|list|tojson }};
+ function calc(){let t=0,n=0;K.forEach((k,i)=>{const e=document.querySelector(`input[name=${k}]:checked`);if(e){t+=e.value*W[i]/10;n++}});
+  document.getElementById('tot').textContent=n<K.length?`заполнено ${n} из ${K.length}`:`${Math.round(t*10)/10}/100`;}
+ document.getElementById('f').addEventListener('change',calc);calc();
+ </script>
+{% endif %}
+<script>
+liveState(st=>{
+  const cl=document.getElementById('closed'),sb=document.getElementById('sb');
+  if(cl)cl.classList.toggle('hide',st.jury_open);
+  if(sb)sb.disabled=!st.jury_open;
+  const bar=document.getElementById('nowbar');
+  const show=st.current&&String(st.current.id)!=='{{ p.id }}';
+  if(show){document.getElementById('nowname').textContent=st.current.num+'. '+st.current.name;
+    bar.href='{{ P }}/j/{{ token }}/p/'+st.current.id;}
+  if(show&&!bar.classList.contains('show')&&navigator.vibrate)navigator.vibrate(120);
+  bar.classList.toggle('show',!!show);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Инструкция для жюри{% endblock %}
+{% block head %}<style>
+.hero{background:var(--acc);color:#fff;border-radius:16px;padding:18px;margin:4px 0 14px}
+.hero h1{margin:0 0 4px;font-size:1.4rem}.hero p{margin:0;opacity:.85}
+.st{display:flex;gap:12px;align-items:flex-start;margin:12px 0}
+.st .n{flex:0 0 34px;height:34px;border-radius:50%;background:#f5b700;color:#08402f;font-weight:800;display:flex;align-items:center;justify-content:center}
+.st b{display:block}
+.scale5{display:grid;grid-template-columns:repeat(5,1fr);border-radius:10px;overflow:hidden;text-align:center;font-size:.72rem}
+.scale5 div{padding:8px 2px;line-height:1.2}.scale5 strong{display:block;font-size:1rem}
+.crit td{padding:6px 4px;font-size:.92rem}.crit td:last-child{text-align:right;color:var(--muted);white-space:nowrap}
+.rule{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}.rule:last-child{border:0}
+.rule .i{flex:0 0 28px;font-size:1.2rem;text-align:center}
+.go{position:sticky;bottom:0;background:var(--bg);padding:12px 0 calc(12px + env(safe-area-inset-bottom))}
+</style>{% endblock %}
+{% block body %}
+<div class="hero">
+ <div style="opacity:.75;font-size:.85rem">Здравствуйте,</div>
+ <h1>{{ j.name }}</h1>
+ <p>Прочтите, пожалуйста, — это займёт одну минуту.</p>
+</div>
+
+<div class="card">
+ <h2 style="margin-top:0">Как оценивать</h2>
+ <div class="st"><div class="n">1</div><div><b>Команда выступает</b><span class="muted">Её карточка сама подсветится у Вас на экране — обновлять страницу не нужно.</span></div></div>
+ <div class="st"><div class="n">2</div><div><b>Нажмите на команду и поставьте 1–10</b><span class="muted">по каждому из 7 критериев — просто нажимайте на цифры.</span></div></div>
+ <div class="st"><div class="n">3</div><div><b>Нажмите «Сохранить оценку»</b><span class="muted">Вы вернётесь к списку команд и увидите «✓ Оценено».</span></div></div>
+</div>
+
+<div class="card">
+ <h2 style="margin-top:0">Шкала</h2>
+ <div class="scale5">
+  <div style="background:#f3d4d4"><strong>1–2</strong>очень слабо</div>
+  <div style="background:#fbe3c8"><strong>3–4</strong>слабо</div>
+  <div style="background:#fdf1c7"><strong>5–6</strong>базово</div>
+  <div style="background:#d9f0e3"><strong>7–8</strong>сильно</div>
+  <div style="background:#b8e3cb"><strong>9–10</strong>отлично</div>
+ </div>
+ <div class="muted" style="margin-top:6px;font-size:.85rem">5–6 — соответствует базовым требованиям, 9–10 — выдающееся решение.</div>
+ <h2>Критерии</h2>
+ <table class="crit">{% for k,l,w in CRITERIA %}<tr><td>{{ l }}</td><td>вес {{ w }}</td></tr>{% endfor %}</table>
+ <div class="muted" style="margin-top:6px">Баллы считаются автоматически: оценка × вес / 10, итог — из 100.</div>
+</div>
+
+<div class="card">
+ <h2 style="margin-top:0">Правила</h2>
+ <div class="rule"><div class="i">✍</div><div><b>Оценивайте самостоятельно</b><div class="muted">Не обсуждайте проекты с коллегами до выставления оценок.</div></div></div>
+ <div class="rule"><div class="i">↻</div><div><b>Оценку можно исправить</b><div class="muted">Пока голосование открыто — откройте команду снова и сохраните.</div></div></div>
+ <div class="rule"><div class="i">⚠</div><div><b>Конфликт интересов</b><div class="muted">Связаны с командой (инвестор, работодатель, консультант, партнёр)? Сообщите секретариату — такой проект Вы не оцениваете.</div></div></div>
+ <div class="rule"><div class="i">👁</div><div><b>Ваши баллы скрыты</b><div class="muted">Чтобы их не увидели соседи. Посмотреть — кнопка «Показать».</div></div></div>
+ <div class="rule"><div class="i">⚖</div><div><b>Честный подсчёт</b><div class="muted">Самая высокая и самая низкая оценка каждого проекта отбрасываются.</div></div></div>
+</div>
+<p class="muted center">Инструкцию можно открыть снова — ссылка «Инструкция» вверху экрана.</p>
+
+<form method="post" action="{{ P }}/j/{{ token }}/start" class="go">
+ <button class="btn block" style="font-size:1.1rem;padding:16px">Понятно, перейти к оценке →</button>
+</form>
+{% endblock %}

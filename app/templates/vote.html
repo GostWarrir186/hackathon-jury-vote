@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Выбор аудитории{% endblock %}
+{% block head %}<style>
+.opt input{display:none}
+.opt label{display:block;padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff;margin:8px 0;cursor:pointer}
+.opt input:checked+label{border:2px solid var(--acc);background:var(--acc2)}
+</style>{% endblock %}
+{% block body %}
+<h1>«Выбор аудитории»</h1>
+{% if done or voted %}
+ <div class="card center"><h2>Спасибо! Ваш голос учтён.</h2><p class="muted">Итоги объявят на церемонии.</p></div>
+{% elif s.audience_open != '1' %}
+ <div class="alert warn">Голосование ещё не открыто. Страница откроется сама, как только начнётся голосование.</div>
+ <script>liveState(st=>{if(st.audience_open)location.reload();});</script>
+{% else %}
+ {% if error %}<div class="alert err">{{ error }}</div>{% endif %}
+ <form method="post">
+  <div class="card">
+   <strong>Ваш телефон или e-mail</strong>
+   <div class="muted">Один участник — один голос. Используется только для проверки.</div>
+   <input type="text" name="voter" required placeholder="+992 ___ __ __ __ или e-mail" style="margin-top:8px" autocomplete="tel">
+  </div>
+  <div class="opt">
+  {% for p in projects %}
+   <input type="radio" name="project_id" value="{{ p.id }}" id="p{{ p.id }}" required>
+   <label for="p{{ p.id }}"><strong>{{ p.num }}. {{ p.name }}</strong>{% if p.team %}<div class="muted">{{ p.team }}</div>{% endif %}</label>
+  {% endfor %}
+  </div>
+  <button class="btn block">Проголосовать</button>
+ </form>
+{% endif %}
+{% endblock %}

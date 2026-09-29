@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Настройка{% endblock %}
+{% block wrapclass %}wide{% endblock %}
+{% block nav %}<a href="{{ P }}/admin">Пульт</a> · <a href="{{ P }}/admin/setup">Настройка</a> · <a href="{{ P }}/admin/qr" target="_blank">QR-коды</a>{% endblock %}
+{% block body %}
+<h1 id="projects">Финалисты</h1>
+<form method="post" action="{{ P }}/admin/projects" class="card scroll"><table>
+<tr><th style="width:70px">№</th><th>Название проекта</th><th>Команда</th><th>Удалить</th></tr>
+{% for p in projects %}<tr><td><input type="number" name="num_{{ p.id }}" value="{{ p.num }}"></td>
+<td><input type="text" name="name_{{ p.id }}" value="{{ p.name }}"></td>
+<td><input type="text" name="team_{{ p.id }}" value="{{ p.team }}"></td>
+<td><input type="checkbox" name="del_{{ p.id }}"></td></tr>{% endfor %}
+<tr><td>+</td><td><input type="text" name="new_name" placeholder="Новый проект"></td><td><input type="text" name="new_team" placeholder="Команда"></td><td></td></tr>
+</table><button class="btn" style="margin-top:10px">Сохранить проекты</button></form>
+
+<h1 id="jurors">Жюри</h1>
+<form method="post" action="{{ P }}/admin/jurors" class="card scroll"><table>
+<tr><th>ФИО / организация</th><th>Роль</th><th>Новая ссылка</th><th>Удалить</th></tr>
+{% for j in jurors %}<tr><td><input type="text" name="name_{{ j.id }}" value="{{ j.name }}"></td>
+<td><input type="text" name="role_{{ j.id }}" value="{{ j.role }}"></td>
+<td><input type="checkbox" name="regen_{{ j.id }}" title="Старый QR перестанет работать"></td>
+<td><input type="checkbox" name="del_{{ j.id }}"></td></tr>{% endfor %}
+<tr><td><input type="text" name="new_name" placeholder="Новый член жюри"></td><td><input type="text" name="new_role" placeholder="Роль"></td><td></td><td></td></tr>
+</table><button class="btn" style="margin-top:10px">Сохранить жюри</button></form>
+
+<h1 id="conflicts">Конфликт интересов</h1>
+<p class="muted">Отметьте, если член жюри — инвестор, работодатель, консультант команды, в деловых отношениях или из той же организации. Он не сможет оценить проект, его голос не учитывается.</p>
+<form method="post" action="{{ P }}/admin/conflicts" class="card scroll"><table>
+<tr><th>Член жюри</th>{% for p in projects %}<th title="{{ p.name }}">{{ p.num }}</th>{% endfor %}</tr>
+{% for j in jurors %}<tr><td>{{ j.name }}</td>{% for p in projects %}
+<td><input type="checkbox" name="cf_{{ j.id }}_{{ p.id }}" {% if (j.id,p.id) in conflicts %}checked{% endif %}></td>{% endfor %}</tr>{% endfor %}
+</table><button class="btn" style="margin-top:10px">Сохранить конфликты</button></form>
+
+<h1>Сброс (после репетиции)</h1>
+<form method="post" action="{{ P }}/admin/reset" class="card row">
+<select name="what" style="width:auto"><option value="scores">Оценки жюри</option><option value="audience">Голоса аудитории</option><option value="all">Всё (+ жюри снова увидят инструкцию)</option></select>
+<input type="text" name="confirm" placeholder="Введите СБРОС" style="width:180px">
+<button class="btn red">Сбросить</button></form>
+{% endblock %}

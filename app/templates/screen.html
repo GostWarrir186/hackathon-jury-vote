@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Итоги{% endblock %}
+{% block head %}<style>
+body{background:#0c1a14;color:#fff}.card{background:#13271e;border-color:#1f3d30}
+.big{font-size:2.2rem;font-weight:800}.muted{color:#9fb8ad}
+.place{font-size:3rem;font-weight:900;width:70px}
+</style>{% if s.results_public != '1' %}<meta http-equiv="refresh" content="10">{% endif %}{% endblock %}
+{% block wrapclass %}wide{% endblock %}
+{% block body %}
+{% if s.results_public != '1' %}
+ <div class="center" style="padding:80px 0"><div class="big">Подведение итогов…</div>
+ <p class="muted">Сканируйте QR, чтобы проголосовать за «Выбор аудитории»</p>
+ {% if s.audience_open == '1' %}<img src="{{ P }}/qr/audience.svg" style="width:320px;background:#fff;border-radius:16px;padding:10px">{% endif %}
+ </div>
+{% else %}
+ <h1 class="big">Победители хакатона</h1>
+ {% for r in res[:3] if r.final is not none %}
+  <div class="card row"><div class="place">{{ r.place }}</div>
+   <div style="flex:1"><div class="big" style="font-size:1.7rem">{{ r.name }}</div><div class="muted">{{ r.team }}</div></div>
+   <div class="big">{{ '%.1f'|format(r.final) }}</div></div>
+ {% endfor %}
+ {% if aud and aud[0].votes > 0 %}
+  <h2 style="margin-top:40px">People's Choice / Выбор аудитории</h2>
+  <div class="card row"><div class="place">★</div>
+   <div style="flex:1"><div class="big" style="font-size:1.7rem">{{ aud[0].name }}</div><div class="muted">{{ aud[0].team }}</div></div>
+   <div class="big">{{ aud[0].votes }}</div></div>
+ {% endif %}
+{% endif %}
+{% endblock %}
